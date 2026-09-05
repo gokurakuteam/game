@@ -1,0 +1,21 @@
+/* --- ШРИФТИ --- */
+@font-face {
+    font-family: 'Motorola';
+    src: url('../fonts/v_MotorolaScreentype_v1.0.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Nokia';
+    src: url('../fonts/v_NokiaCellphoneFC_v1.0.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Shaka';
+    src: url('../fonts/v_ShakaGraphics03_v1.0.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Silky';
+    src: url('../fonts/v_SilkyWonderland_v1.0.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Speccy';
+    src: url('../fonts/v_SpeccyMedium_v1.0.ttf') format('truetype');
+}

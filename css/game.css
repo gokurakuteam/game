@@ -1,0 +1,734 @@
+/* --- ІГРОВА КІМНАТА --- */
+#game-container {
+    background-color: #4b2a10; /* Оновлений колір стін кімнати */
+    align-items: center;
+    justify-content: center;
+}
+
+#game-container.active {
+    display: flex;
+}
+
+#room {
+    position: relative;
+    width: 960px; /* 480 * 2 */
+    height: 720px; /* 360 * 2 */
+    background-image: 
+        url('../rooms/start_room/walls.png'),
+        url('../rooms/start_room/floor.png');
+    background-size: 100% 100%;
+    image-rendering: pixelated;
+    border: none;
+    overflow: hidden;
+    z-index: 1;
+    isolation: isolate;
+}
+
+/* Шар динамічних об'єктів кімнати (меблі, декор, двері) */
+#objects-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.room-object {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: 100% 100%;
+    image-rendering: pixelated;
+    pointer-events: none;
+    transition: filter 0.12s ease;
+}
+
+/* Яскравий піксельний жовтий контур навколо об'єкта */
+.room-object.highlighted,
+#oma-npc.highlighted {
+    filter: drop-shadow(2px 0 0 #ffcc00) 
+            drop-shadow(-2px 0 0 #ffcc00) 
+            drop-shadow(0 2px 0 #ffcc00) 
+            drop-shadow(0 -2px 0 #ffcc00);
+}
+
+/* Рамка кімнати (зовнішні межі) малюється поверх усього */
+#room::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: var(--room-border, url('../rooms/start_room/border.png'));
+    background-size: 100% 100%;
+    image-rendering: pixelated;
+    pointer-events: none;
+    z-index: 5000;
+}
+
+#player {
+    position: absolute;
+    width: 96px;
+    height: 96px;
+    background-image: url('../characters/main_character_spritesheet.png');
+    background-size: 576px 480px;
+    background-position: 0px 0px;
+    top: 50%;
+    left: 50%;
+    image-rendering: pixelated;
+    z-index: 10;
+}
+
+/* --- ЕФЕКТ ЗАТЕМНЕННЯ (Прокидання) --- */
+#fade-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    z-index: 1500; /* Вище кімнати, але під меню паузи */
+    pointer-events: none;
+    transition: opacity 3s ease-in-out;
+}
+
+/* --- ЗАТЕМНЕННЯ НА ВЕСЬ ЕКРАН ПІД ЧАС ДУМОК ПЕРСОНАЖА --- */
+#thought-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(10, 6, 3, 0.72);
+    z-index: 90; /* Вище кімнати, але під вікном діалогу (z-index 100) */
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease-in-out;
+}
+
+#thought-overlay.active {
+    opacity: 1;
+}
+
+/* --- ПІДКАЗКА ВЗАЄМОДІЇ ([E] Оглянути) ПРАВОРУЧ ВНИЗУ --- */
+#interact-prompt {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: rgba(20, 15, 10, 0.95);
+    border: 2px solid #ffcc00;
+    padding: 6px 12px;
+    z-index: 95;
+    pointer-events: none;
+    font-family: 'Speccy', sans-serif;
+    color: #fff;
+    font-size: 1.1rem;
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.7);
+    animation: prompt-pulse 1.8s infinite ease-in-out;
+}
+
+#interact-prompt.hidden {
+    display: none !important;
+}
+
+.prompt-badge {
+    background-color: #ffcc00;
+    color: #1a1005;
+    padding: 2px 6px;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.prompt-text {
+    color: #fff;
+    font-size: 1.1rem;
+}
+
+@keyframes prompt-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+}
+
+/* --- NPC ОМА --- */
+#oma-npc {
+    position: absolute;
+    width: 96px;
+    height: 96px;
+    background-image: url('../characters/oma_character_spritesheet.png');
+    background-size: 576px 480px;
+    background-position: 0px 0px;
+    display: none; /* Показуємо тільки під час/після катсцени */
+    image-rendering: pixelated;
+    z-index: 9;
+    transition: filter 0.12s ease;
+}
+
+/* --- КНОПКА ТА СПОВІЩЕННЯ ЗАПИСНИКА --- */
+.notebook-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 95;
+    padding: 8px 16px;
+    font-size: 1.15rem;
+    background-color: #2b1a0d;
+    border: 2px solid #ffcc00;
+    color: #fff;
+    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.15s, background-color 0.15s;
+}
+
+.notebook-btn:hover {
+    background-color: #4a2f17;
+    transform: scale(1.05);
+}
+
+.notebook-btn.pulse {
+    animation: notebook-glow 0.8s 3 ease-in-out;
+}
+
+@keyframes notebook-glow {
+    0%, 100% { transform: scale(1); box-shadow: 3px 3px 0px rgba(0,0,0,0.8); }
+    50% { transform: scale(1.12); box-shadow: 0 0 12px #ffcc00; }
+}
+
+.badge {
+    background-color: #e62222;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.85rem;
+    padding: 1px 6px;
+    border-radius: 50%;
+    animation: badge-blink 1s infinite;
+}
+
+@keyframes badge-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Спливаюча анімація нового запису */
+#notebook-toast {
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1a1005;
+    border: 2px solid #ffcc00;
+    color: #ffcc00;
+    padding: 10px 24px;
+    font-family: 'Speccy', sans-serif;
+    font-size: 1.25rem;
+    z-index: 2000;
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.85);
+    animation: toast-anim 2.5s forwards ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes toast-anim {
+    0% { opacity: 0; transform: translate(-50%, -20px); }
+    15% { opacity: 1; transform: translate(-50%, 0); }
+    80% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -15px); }
+}
+
+/* --- ВІКНО ЗАПИСНИКА --- */
+#notebook-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 2100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#notebook-modal.hidden {
+    display: none !important;
+}
+
+.notebook-window {
+    width: 740px;
+    height: 500px;
+    background-color: #24170c;
+    border: 4px solid #c99738;
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: #fff;
+    font-family: 'Speccy', sans-serif;
+}
+
+.notebook-header {
+    background-color: #382413;
+    padding: 12px 20px;
+    border-bottom: 3px solid #c99738;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notebook-header h2 {
+    color: #ffcc00;
+    font-size: 1.5rem;
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+.notebook-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.notebook-sidebar {
+    width: 260px;
+    background-color: #1a1008;
+    border-right: 2px solid #5a3c1e;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notebook-item-btn {
+    background-color: #2d1d0e;
+    color: #eeddbb;
+    border: 2px solid #5a3c1e;
+    padding: 8px 12px;
+    font-family: 'Speccy', sans-serif;
+    font-size: 1.05rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.1s, border-color 0.1s;
+}
+
+.notebook-item-btn:hover {
+    background-color: #4a2f17;
+    border-color: #ffcc00;
+    color: #fff;
+}
+
+.notebook-item-btn.active {
+    background-color: #57371a;
+    border-color: #ffcc00;
+    color: #ffcc00;
+}
+
+.notebook-view {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #2d1d0e;
+    line-height: 1.5;
+}
+
+.notebook-placeholder {
+    color: #8c7355;
+    font-size: 1.15rem;
+    text-align: center;
+    margin-top: 100px;
+}
+
+.entry-title {
+    color: #ffcc00;
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #5a3c1e;
+    padding-bottom: 6px;
+}
+
+.entry-source {
+    color: #b59a72;
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+    font-style: italic;
+}
+
+.entry-body {
+    font-size: 1.15rem;
+    color: #f5ede0;
+    margin-bottom: 16px;
+    white-space: pre-wrap;
+}
+
+.entry-words {
+    background-color: #1c1108;
+    border: 1px dashed #c99738;
+    padding: 10px;
+    border-radius: 3px;
+}
+
+.entry-words h4 {
+    color: #ffcc00;
+    margin-bottom: 6px;
+    font-size: 1rem;
+}
+
+.entry-words ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.entry-words li {
+    font-size: 1rem;
+    color: #ffe680;
+    margin-bottom: 4px;
+}
+
+/* --- ЕКРАНИ GAME OVER ТА ПЕРЕМОГИ --- */
+.end-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(10, 5, 5, 0.95);
+    font-family: 'Speccy', sans-serif;
+    color: #fff;
+    text-align: center;
+}
+
+.end-screen.hidden {
+    display: none !important;
+}
+
+.end-content {
+    max-width: 680px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.game-over-title {
+    color: #e62222;
+    font-size: 2.2rem;
+    letter-spacing: 2px;
+    text-shadow: 3px 3px 0 #000;
+}
+
+.victory-title {
+    color: #ffcc00;
+    font-size: 2.4rem;
+    letter-spacing: 2px;
+    text-shadow: 3px 3px 0 #000;
+}
+
+#game-over-text, #victory-text {
+    font-size: 1.3rem;
+    line-height: 1.6;
+    color: #e0d0c0;
+}
+
+/* --- МОДАЛЬНЕ ВІКНО КНИГИ КАЗОК --- */
+#book-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(5, 3, 2, 0.88);
+    backdrop-filter: blur(2px);
+}
+
+#book-modal.hidden {
+    display: none !important;
+}
+
+.book-window {
+    width: 880px;
+    height: 580px;
+    background-color: #382011;
+    border: 4px solid #6b4724;
+    outline: 3px solid #1a0c04;
+    box-shadow: 0 0 35px rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    font-family: 'Speccy', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.book-window.horror-mode {
+    background-color: #240b0b;
+    border-color: #991a1a;
+    outline-color: #3b0000;
+    box-shadow: 0 0 45px rgba(180, 20, 20, 0.5), inset 0 0 30px rgba(0, 0, 0, 0.7);
+    animation: horror-flicker 4s infinite alternate ease-in-out;
+}
+
+@keyframes horror-flicker {
+    0% { box-shadow: 0 0 30px rgba(150, 10, 10, 0.4); }
+    50% { box-shadow: 0 0 50px rgba(220, 20, 20, 0.65); }
+    100% { box-shadow: 0 0 35px rgba(130, 10, 10, 0.45); }
+}
+
+.book-header {
+    background-color: #241308;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #543519;
+}
+
+.book-window.horror-mode .book-header {
+    background-color: #170404;
+    border-bottom-color: #701010;
+}
+
+.book-header h2 {
+    color: #ffdd88;
+    font-size: 1.25rem;
+    letter-spacing: 1px;
+}
+
+.book-window.horror-mode .book-header h2 {
+    color: #ff4444;
+    text-shadow: 0 0 8px #990000;
+}
+
+.book-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.book-sidebar {
+    width: 270px;
+    background-color: #2a160b;
+    border-right: 3px solid #543519;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+}
+
+.book-window.horror-mode .book-sidebar {
+    background-color: #1a0808;
+    border-right-color: #701010;
+}
+
+.book-item-btn {
+    background-color: #3d2212;
+    color: #e6d3ba;
+    border: 2px solid #5e3b1c;
+    padding: 10px 12px;
+    font-family: 'Speccy', sans-serif;
+    font-size: 0.95rem;
+    text-align: left;
+    cursor: pointer;
+    line-height: 1.35;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.book-item-btn:hover {
+    background-color: #573319;
+    border-color: #ffcc00;
+    color: #fff;
+}
+
+.book-item-btn.active {
+    background-color: #63391b;
+    border-color: #ffcc00;
+    color: #ffea70;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+}
+
+.book-item-btn.horror-btn {
+    border-color: #772222;
+    color: #ff9999;
+}
+
+.book-item-btn.horror-btn:hover,
+.book-item-btn.horror-btn.active {
+    background-color: #5c1414;
+    border-color: #ff3333;
+    color: #ffcccc;
+}
+
+.book-page-view {
+    flex: 1;
+    padding: 24px 28px;
+    overflow-y: auto;
+    background-color: #f7eed8;
+    color: #29180c;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.book-window.horror-mode .book-page-view {
+    background: radial-gradient(circle, #2b0f0f 0%, #180505 100%);
+    color: #f0d5d5;
+}
+
+.story-title {
+    color: #733c10;
+    font-size: 1.45rem;
+    border-bottom: 2px solid #d4be9a;
+    padding-bottom: 6px;
+    margin: 0;
+}
+
+.book-window.horror-mode .story-title {
+    color: #ff4d4d;
+    border-bottom-color: #701010;
+    text-shadow: 1px 1px 4px #000;
+}
+
+.story-subtitle {
+    font-size: 0.95rem;
+    color: #8c633a;
+    font-style: italic;
+    margin-top: -10px;
+}
+
+.book-window.horror-mode .story-subtitle {
+    color: #c97979;
+}
+
+.story-hint {
+    font-size: 0.95rem;
+    color: #8c5324;
+    font-style: italic;
+    padding: 6px 10px;
+    background: rgba(217, 119, 6, 0.1);
+    border-left: 3px solid #ea580c;
+    border-radius: 2px;
+}
+
+.book-window.horror-mode .story-hint {
+    color: #df8888;
+    background: rgba(220, 38, 38, 0.15);
+    border-left-color: #ef4444;
+}
+
+.book-text-section {
+    background-color: rgba(255, 255, 255, 0.45);
+    border-left: 3px solid #8f6436;
+    padding: 12px 16px;
+    border-radius: 2px;
+}
+
+.book-window.horror-mode .book-text-section {
+    background-color: rgba(20, 0, 0, 0.5);
+    border-left-color: #b31b1b;
+}
+
+.story-german-text {
+    font-size: 1.18rem;
+    white-space: pre-wrap;
+    line-height: 1.85;
+    margin-bottom: 14px;
+}
+
+/* --- ЧІТКЕ ТА КОНТРАСТНЕ ВИДІЛЕННЯ СЛІВ ДЛЯ ПЕРЕКЛАДУ В КАЗКАХ --- */
+.book-page-view .dict-word {
+    color: #9a3412;
+    font-weight: bold;
+    background-color: rgba(234, 88, 12, 0.13);
+    border-bottom: 2px solid #ea580c;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin: 0 1px;
+    cursor: pointer;
+    display: inline-block;
+    transition: all 0.15s ease;
+    user-select: text;
+}
+
+.book-page-view .dict-word:hover,
+.book-page-view .dict-word.active {
+    background-color: #ea580c;
+    color: #ffffff !important;
+    border-bottom-color: #7c2d12;
+    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.45);
+    transform: translateY(-2px);
+}
+
+.book-window.horror-mode .book-page-view .dict-word {
+    color: #ff9988;
+    background-color: rgba(220, 38, 38, 0.25);
+    border-bottom: 2px solid #ef4444;
+    text-shadow: 0 0 3px rgba(255, 60, 60, 0.4);
+}
+
+.book-window.horror-mode .book-page-view .dict-word:hover,
+.book-window.horror-mode .book-page-view .dict-word.active {
+    background-color: #dc2626;
+    color: #ffffff !important;
+    border-bottom-color: #991b1b;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.7);
+}
+
+.story-translation {
+    font-size: 1.05rem;
+    color: #4f341e;
+    border-top: 1px dashed #bfaa8c;
+    padding-top: 10px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+}
+
+.book-window.horror-mode .story-translation {
+    color: #dfbaba;
+    border-top-color: #631717;
+}
+
+.story-dedication {
+    background-color: #edd9b9;
+    border: 1px solid #c9ae87;
+    padding: 12px 14px;
+    border-radius: 3px;
+    font-size: 1.05rem;
+    color: #47260d;
+    line-height: 1.5;
+}
+
+.book-window.horror-mode .story-dedication {
+    background-color: #3b1111;
+    border-color: #801d1d;
+    color: #ffcccc;
+}
+
+.story-anna-note {
+    background-color: #2b170c;
+    color: #ffe6a3;
+    padding: 10px 14px;
+    border-radius: 3px;
+    font-size: 1.05rem;
+    border-left: 4px solid #ffcc00;
+}
+
+.book-window.horror-mode .story-anna-note {
+    background-color: #170404;
+    color: #ffc2c2;
+    border-left-color: #ff2222;
+}
+

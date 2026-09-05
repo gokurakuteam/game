@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Das Abendessen</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Головне меню -->
+    <div id="main-menu" class="screen active">
+        <!-- Паралакс фон -->
+        <div class="parallax-bg" id="parallax">
+            <div class="layer layer-1" style="background-image: url('background/1.png');" data-speed="2"></div>
+            <div class="layer layer-2" style="background-image: url('background/2.png');" data-speed="4"></div>
+            <div class="layer layer-3" style="background-image: url('background/3.png');" data-speed="6"></div>
+            <div class="layer layer-4" style="background-image: url('background/4.png');" data-speed="8"></div>
+        </div>
+        
+        <div class="menu-content">
+            <h1 class="game-title">Das Abendessen</h1>
+            <div class="buttons">
+                <button id="btn-play" class="pixel-btn">Грати</button>
+                <button id="btn-music" class="pixel-btn">Музика: Вимк</button>
+                <button id="btn-sound" class="pixel-btn">Звуки: Вимк</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Кімната гри -->
+    <div id="game-container" class="screen">
+        <div id="fade-overlay"></div> <!-- Екран затемнення для прокидання -->
+        <!-- Оверлей затемнення думок персонажа на весь екран -->
+        <div id="thought-overlay"></div>
+        
+        <div id="room">
+            <!-- Шар предметів та меблів -->
+            <div id="objects-layer"></div>
+            <!-- Персонаж бабусі (NPC) -->
+            <div id="oma-npc"></div>
+            <!-- Гравець -->
+            <div id="player"></div>
+        </div>
+
+        <!-- Підказка взаємодії (праворуч внизу екрана) -->
+        <div id="interact-prompt" class="hidden">
+            <span class="prompt-badge">[E]</span>
+            <span class="prompt-text">Оглянути</span>
+        </div>
+
+        <!-- Вікно діалогу -->
+        <div id="dialog-wrapper" class="hidden">
+            <div id="dialog-portrait" class="left"></div>
+            <div id="dialog-box">
+                <div id="dialog-content">
+                    <h3 id="dialog-name">Oma</h3>
+                    <p id="dialog-text"></p>
+                    
+                    <!-- Поле введення імені -->
+                    <div id="dialog-input-container" class="hidden">
+                        <input type="text" id="playerNameInput" class="pixel-input" placeholder="Введіть ім'я..." maxlength="16" autocomplete="off">
+                        <button id="btn-submit-name" class="pixel-btn small-btn">OK</button>
+                    </div>
+
+                    <!-- Варіанти відповіді -->
+                    <div id="dialog-choices" class="hidden">
+                        <!-- Кнопки генеруються через JS -->
+                    </div>
+                    
+                    <span id="dialog-indicator">></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Кнопка записника (вгорі праворуч) -->
+        <button id="btn-notebook" class="pixel-btn notebook-btn" title="Відкрити записник (J)">📖 Записник <span id="notebook-badge" class="badge hidden">!</span></button>
+
+        <!-- Спливаюче сповіщення про новий запис -->
+        <div id="notebook-toast" class="hidden">✨ Новий запис у щоденник!</div>
+
+        <!-- Модальне вікно записника -->
+        <div id="notebook-modal" class="hidden">
+            <div class="notebook-window">
+                <div class="notebook-header">
+                    <h2>📖 Записник Анни</h2>
+                    <button id="btn-close-notebook" class="pixel-btn small-btn">✕</button>
+                </div>
+                <div class="notebook-body">
+                    <div id="notebook-list" class="notebook-sidebar"></div>
+                    <div id="notebook-content" class="notebook-view">
+                        <p class="notebook-placeholder">Оглядайте предмети та меблі в кімнатах, щоб дізнатися історію...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальне вікно читання книги казок -->
+        <div id="book-modal" class="hidden">
+            <div class="book-window">
+                <div class="book-header">
+                    <h2 id="book-modal-title">📚 «Deutsche Märchen für Kinder»</h2>
+                    <button id="btn-close-book" class="pixel-btn small-btn">✕</button>
+                </div>
+                <div class="book-body">
+                    <div id="book-toc" class="book-sidebar"></div>
+                    <div id="book-page" class="book-page-view"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Спливаючий тултіп перекладу німецьких слів (працює у діалогах, книгах та щоденнику) -->
+        <div id="dict-tooltip" class="hidden"></div>
+
+        <!-- Екран поразки -->
+        <div id="game-over-screen" class="hidden end-screen">
+            <div class="end-content">
+                <h1 class="game-over-title">ВИ НЕ ЗМОГЛИ ВТЕКТИ...</h1>
+                <p id="game-over-text">Ома замкнула вас у будинку назавжди. Вечеря готова.</p>
+                <button id="btn-retry" class="pixel-btn">Спробувати знову</button>
+            </div>
+        </div>
+
+        <!-- Екран перемоги -->
+        <div id="victory-screen" class="hidden end-screen">
+            <div class="end-content">
+                <h1 class="victory-title">ВТЕЧА ВДАЛАСЯ!</h1>
+                <p id="victory-text">Ома усвідомила свій біль і віддала вам ключ. Ви вибігли крізь важкі двері в нічний ліс і дісталися порятунку. Ви вільні!</p>
+                <button id="btn-victory-menu" class="pixel-btn">В Головне Меню</button>
+            </div>
+        </div>
+
+        <!-- Меню Паузи (ESC) -->
+        <div id="pause-menu" class="hidden">
+            <h2>ПАУЗА</h2>
+            <div class="buttons">
+                <button id="btn-resume" class="pixel-btn">Продовжити</button>
+                <button id="btn-pause-music" class="pixel-btn">Музика: Увімк</button>
+                <button id="btn-pause-sound" class="pixel-btn">Звуки: Увімк</button>
+                <button id="btn-exit" class="pixel-btn">В Меню</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Аудіо -->
+    <audio id="ambient-audio" src="music/ambient 1.mp3" loop></audio>
+    <audio id="horror-audio" src="music/horror ambient.mp3" loop></audio>
+    <audio id="wind-audio" src="sounds/wind.mp3" loop></audio>
+
+    <!-- Скрипти гри -->
+    <script src="js/state.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/level.js"></script>
+    <script src="js/dialog.js"></script>
+    <script src="js/cutscenes.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/menu.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
